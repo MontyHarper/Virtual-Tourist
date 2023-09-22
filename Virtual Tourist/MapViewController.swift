@@ -56,10 +56,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         updateMapPins()
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(true)
+    deinit {
         // documentation says to set mapView's delegate to nil when you're done with it
         mapView.delegate = nil
+        longPress.delegate = nil
     }
     
     // MARK: - Creation of New Map Annotation (Pin)
@@ -272,19 +272,20 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
         let reuseId = "pin"
+        // This provides access to the pin's properties.
+        let pin = annotation as! Pin
         
         var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKMarkerAnnotationView
         
         if pinView == nil {
             pinView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-            pinView!.canShowCallout = true
-            pinView!.rightCalloutAccessoryView = UIButton()
+            pinView!.subtitleVisibility = .visible
+            pinView!.titleVisibility = .visible
         }
         
-        pinView!.annotation = annotation
+        pinView!.annotation = pin
+        pinView!.glyphText = "\(pin.numberOfPhotos)"
         
-        pinView!.rightCalloutAccessoryView?.isHidden = (pinView!.annotation?.subtitle == "No Link Available")
-        pinView!.rightCalloutAccessoryView?.isUserInteractionEnabled = (pinView!.annotation?.subtitle != "No Link Available")
         
         return pinView
     }
