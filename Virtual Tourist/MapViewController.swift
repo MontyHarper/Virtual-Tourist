@@ -18,10 +18,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     
     // All the persisted map pins get loaded into here.
     var pins:[Pin] = []
-    
-    // Used to persist the boundaries of mapView.
-    var mapRect:MKMapRect!
-    
+        
     // Used to reverse geocode locations of map pins.
     let geocoder = CLGeocoder()
     
@@ -39,6 +36,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         super.viewDidLoad()
         
         // Retreive the map view last set by the user, if there is one.
+        
+        var mapRect = MKMapRect()
         if let dict = UserDefaults.standard.dictionary(forKey: Settings.currentMap.rawValue) as? [String:Double] {
             mapRect = MapRectConverter.mapRect(from: dict)
         } else {
@@ -46,14 +45,14 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
             mapRect = MKMapRect(origin: MKMapRect.world.origin, size: MKMapRect.world.size)
         }
         
-        // Set up delegation
-        mapView.delegate = self
-        longPress.delegate = self
-        
         // Set up mapView with persisted borders and pins
         mapView.setVisibleMapRect(mapRect, animated: true)
         loadMapData()
         updateMapPins()
+        
+        // Set up delegation
+        mapView.delegate = self
+        longPress.delegate = self
     }
     
     deinit {
@@ -66,12 +65,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     
     
     // This method creates a Pin in the view context using the given location and title, saves the context, and updates the mapView.
-    fileprivate func createPin (at location: MKPlacemark, title: String, subTitle: String) {
+    fileprivate func createPin (at location: MKPlacemark, title: String, subtitle: String) {
         let pin = Pin(context:dataController.viewContext)
         pin.longitude = location.coordinate.longitude
         pin.latitude = location.coordinate.latitude
         pin.title = title
-        pin.subTitle = subTitle
+        pin.subtitle = subtitle
         try! dataController.viewContext.save()
         print("I made this pin: \(pin)")
         pins.append(pin)
@@ -81,7 +80,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     fileprivate func createPinTitles(poiName: String?, place: CLPlacemark, closure: (String,String) -> Void) {
         
         var title = "B.F. Nowhere"
-        var subTitle = ""
+        var subtitle = ""
         
         // Best option: POI Name / City, State, Country
         // If not that: Neighborhood / City, State, Country
@@ -101,23 +100,23 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         
         if name != "" {
             title = name
-            subTitle = "\(inOn) \(cityComma)\(stateComma)\(country)"
+            subtitle = "\(inOn) \(cityComma)\(stateComma)\(country)"
         } else if neighborhood != "" {
             title = neighborhood
-            subTitle = "\(inOn) \(cityComma)\(stateComma)\(country)"
+            subtitle = "\(inOn) \(cityComma)\(stateComma)\(country)"
         } else if city != "" {
             title = city
-            subTitle = "\(inOn) \(stateComma)\(country)"
+            subtitle = "\(inOn) \(stateComma)\(country)"
         } else if state != "" {
             title = state
-            subTitle = "\(inOn) \(country)"
+            subtitle = "\(inOn) \(country)"
         } else {
             title = "Somewhere"
-            subTitle = "\(inOn) \(country)"
+            subtitle = "\(inOn) \(country)"
         }
         
-        print("We are at: \(title) \n \(subTitle)")
-        closure(title, subTitle)
+        print("We are at: \(title) \n \(subtitle)")
+        closure(title, subtitle)
     }
         
     
@@ -177,7 +176,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     }
 
     
-    // This method uses a Point of Interest (POI) search or Reverse Geolocation to return via closure a name (if a POI exists nearby) and Placemark for the new pin.
+    // This method uses a Point of Interest (POI) search or Reverse Geolocation to return (via closure) a name (if a POI exists nearby) and Placemark for the new pin.
     fileprivate func findPlacemark(at location: CLLocation, makePinTitles: @escaping (String?, MKPlacemark) -> Void) {
         
         // Match the placemark to a POI if it makes sense to
@@ -193,8 +192,34 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         }
     }
     
+    @IBAction func deletePinsInView(_ sender: Any) {
+                
+        let pinsToDelete = pins.filter {mapView.visibleMapRect.contains(MKMapPoint($0.coordinate))}
+            
+        let alert = UIAlertController(title: "Delete Pins", message: "You're about to delete all \(pinsToDelete.count) pins located on the visible map along with any photos associated with those pins. This cannot be undone.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: { [self]_ in
+                print("Deleting pins:")
+                mapView.removeAnnotations(pinsToDelete)
+                for pin in pinsToDelete {
+                    print(pin)
+                    self.dataController.viewContext.delete(pin)
+                    self.pins.removeAll(where: {$0.id == pin.id})
+                }
+                do {
+                    try self.dataController.viewContext.save()
+                } catch {
+                    //handle the error
+                    print("Error saving changes after deleting a pin")
+                }
+            }))
+            alert.addAction(UIAlertAction(title: "Nevermind", style: UIAlertAction.Style.cancel, handler: {_ in
+                self.dismiss(animated: true)
+            }))
+            self.present(alert, animated: true, completion: nil)
         
-    // This method responds to the long hold gesture and initiates the process of creating a new pin.
+    }
+    
+    // This method responds to the long press gesture and initiates the process of creating a new pin.
     @IBAction func pinDrop(_ sender: UIGestureRecognizer) {
    
         switch sender.state {
@@ -217,8 +242,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
             
             // Create the new pin
             findPlacemark(at: location) {name, placemark in
-                self.createPinTitles(poiName: name, place: placemark) {title, subTitle in
-                    self.createPin(at: placemark, title: title, subTitle: subTitle)
+                self.createPinTitles(poiName: name, place: placemark) {title, subtitle in
+                    self.createPin(at: placemark, title: title, subtitle: subtitle)
                 }
             }
             
@@ -235,10 +260,21 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         }
     }
 
+    // MARK: - Gesture Recognizer Delegate Functions
+    
     // This stops the unwanted behavior I was getting, which was that a long press only triggered a reaction every other time. Thank you StackFlow!
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        
         return true
     }
+    
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+
+        return gestureRecognizer.view === mapView && otherGestureRecognizer.view is MKMarkerAnnotationView
+    }
+    
+
+
 
     
     // MARK: - Adding Annotations to MapView
@@ -254,6 +290,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     }
     
     // Updates mapView with current list of annotations.
+    // I don't think this is needed - lets get rid of it and add or remove one pin at a time after the initial adding of the pins which can already be done with this one line.
     func updateMapPins() {
         mapView.addAnnotations(pins)
     }
@@ -268,28 +305,84 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     }
     
     
-    // Returns an annotation view for each map pin as needed. This is in progress - not sure how to do what I want. I'd like to show the number of photos available on the given pin, as well as some way of deleting the pin. Our requirement is that tapping the pin will open the photo album. The link stuff is a holdover from the previous "on the map" app.
+    // Returns an annotation view for each map pin as needed. This is in progress - not sure how to do what I want. I'd like to show the number of photos available on the given pin, as well as some way of deleting the pin. Our requirement is that tapping the pin will open the photo album.
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
         let reuseId = "pin"
+        
         // This provides access to the pin's properties.
         let pin = annotation as! Pin
         
         var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKMarkerAnnotationView
         
         if pinView == nil {
-            pinView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            pinView = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: reuseId)
             pinView!.subtitleVisibility = .visible
             pinView!.titleVisibility = .visible
+            let longPress = UILongPressGestureRecognizer(target:self, action: #selector(deletePinAlert(_:)))
+            // Delegate method allows more than one longPress to respond.
+            longPress.delegate = self
+            let tap = UITapGestureRecognizer(target: self, action: #selector(gotoPhotoPage(_:)))
+            pinView!.addGestureRecognizer(longPress)
+            pinView!.addGestureRecognizer(tap)
+            pinView!.isUserInteractionEnabled = true
+            pinView!.canShowCallout = false
         }
         
         pinView!.annotation = pin
         pinView!.glyphText = "\(pin.numberOfPhotos)"
         
-        
         return pinView
     }
     
+    @objc private func deletePinAlert(_ sender: UILongPressGestureRecognizer) {
+ 
+        guard let view = sender.view as? MKMarkerAnnotationView else {
+            return assertionFailure("Gestured Failed: View is not MLMarkerAnnotationView")
+        }
+        
+        guard let pin = view.annotation as? Pin else {
+            return assertionFailure("Gesture Failed: AnnotationView is not a Pin")
+        }
+        
+        // Check state in order to trigger the action only once, when state begins.
+        if sender.state == .began {
+            print("DELETE PIN: \(pin.title ?? "Untitled Pin")")
+            
+            let alert = UIAlertController(title: "Delete Pin at \(pin.title ?? "Untitled Pin")", message: "You will delete this map pin along with \(pin.numberOfPhotos) photos. This cannot be undone.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: { [self] _ in
+                
+                // Do things to delete the pin here
+                print("Deleting the pin now.")
+                self.pins.removeAll(where: {$0.id == pin.id})
+                mapView.removeAnnotation(pin)
+                self.dataController.viewContext.delete(pin)
+                do {
+                    try self.dataController.viewContext.save()
+                } catch {
+                    //handle the error
+                    print("Error saving changes after deleting a pin")
+                }
+            }))
+            alert.addAction(UIAlertAction(title: "Nevermind", style: UIAlertAction.Style.cancel, handler: {_ in
+                self.dismiss(animated: true)
+            }))
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    @objc private func gotoPhotoPage(_ sender: UITapGestureRecognizer) {
+        
+        guard let view = sender.view as? MKMarkerAnnotationView else {
+            return assertionFailure("Gesture Failed: View is not MKMarkerAnnotationView")
+        }
+        
+        guard let pin = view.annotation as? Pin else {
+            return assertionFailure("Gesture Failed: AnnotationView is not a Pin")
+        }
+                
+        print("Goto Photo Page For Pin: \(pin.title ?? "Untitled Pin")")
+    }
 }
 
 

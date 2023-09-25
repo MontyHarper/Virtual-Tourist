@@ -29,13 +29,13 @@
         <!--Map View-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" userLabel="Map View" customClass="MapViewController" customModule="Virtual_Tourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController title="Virtual Tourist" id="BYZ-38-t0r" userLabel="Map View" customClass="MapViewController" customModule="Virtual_Tourist" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" pitchEnabled="NO" showsScale="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jPC-gj-sMc">
-                                <rect key="frame" x="0.0" y="91" width="390" height="719"/>
+                                <rect key="frame" x="0.0" y="91" width="390" height="670"/>
                                 <gestureRecognizers/>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                                 <connections>
@@ -53,7 +53,15 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="jPC-gj-sMc" secondAttribute="bottom" id="zKr-xm-Kmy"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="EXE-hU-rNh"/>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" title="Virtual Tourist" id="CXg-Vy-3J2">
+                        <barButtonItem key="rightBarButtonItem" systemItem="trash" id="A8T-Lp-WAS" userLabel="Clear Pins">
+                            <connections>
+                                <action selector="deletePinsInView:" destination="BYZ-38-t0r" id="4O4-DM-tOr"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="longPress" destination="dHv-Ll-gOZ" id="COx-Ij-Xyi"/>
                         <outlet property="mapView" destination="jPC-gj-sMc" id="2Mi-D2-Lp9"/>
@@ -68,10 +76,10 @@
             </objects>
             <point key="canvasLocation" x="-232" y="38"/>
         </scene>
-        <!--Collection View Controller-->
+        <!--Photo Page View Controller-->
         <scene sceneID="Yta-hF-wh6">
             <objects>
-                <collectionViewController id="7mp-On-vWX" sceneMemberID="viewController">
+                <collectionViewController id="7mp-On-vWX" customClass="PhotoPageViewController" sceneMemberID="viewController">
                     <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" id="rFr-H2-saE">
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -100,7 +108,7 @@
                 </collectionViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="H3b-gD-up2" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="472" y="38"/>
+            <point key="canvasLocation" x="511" y="38"/>
         </scene>
     </scenes>
     <resources>
