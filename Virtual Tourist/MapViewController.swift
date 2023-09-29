@@ -382,6 +382,26 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         }
                 
         print("Goto Photo Page For Pin: \(pin.title ?? "Untitled Pin")")
+        
+        // change this to > when you have code for downloading ready to test
+        if pin.numberOfPhotos >= 0 {
+            
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            
+            guard let photoAlbumView = storyboard.instantiateViewController(withIdentifier: "PhotoAlbum") as? PhotoAlbumViewController else {
+                return
+            }
+            // Customize the collectionViewController if needed
+            // For example, you can pass data to the collectionViewController
+            photoAlbumView.pin = pin
+            
+            navigationController?.pushViewController(photoAlbumView, animated: true)
+            
+        } else {
+            
+            // code here to download photos
+        }
+        
     }
 }
 

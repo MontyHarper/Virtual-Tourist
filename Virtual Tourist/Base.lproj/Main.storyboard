@@ -76,39 +76,55 @@
             </objects>
             <point key="canvasLocation" x="-232" y="38"/>
         </scene>
-        <!--Photo Page View Controller-->
-        <scene sceneID="Yta-hF-wh6">
+        <!--Photo Album View Controller-->
+        <scene sceneID="OU4-x3-V7r">
             <objects>
-                <collectionViewController id="7mp-On-vWX" customClass="PhotoPageViewController" sceneMemberID="viewController">
-                    <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" id="rFr-H2-saE">
+                <viewController storyboardIdentifier="PhotoAlbum" id="oiO-Yc-VRA" customClass="PhotoAlbumViewController" customModule="Virtual_Tourist" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="dJY-CY-rNn">
                         <rect key="frame" x="0.0" y="0.0" width="390" height="844"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="Sv3-Ho-fly">
+                                <rect key="frame" x="16" y="47" width="358" height="763"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="KTf-3b-xtb">
+                                    <size key="itemSize" width="128" height="128"/>
+                                    <size key="headerReferenceSize" width="0.0" height="0.0"/>
+                                    <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                    <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                </collectionViewFlowLayout>
+                                <cells>
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="photoCell" id="Tjf-cB-PV8">
+                                        <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="ihy-Gk-euv">
+                                            <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </collectionViewCellContentView>
+                                    </collectionViewCell>
+                                </cells>
+                                <connections>
+                                    <outlet property="dataSource" destination="oiO-Yc-VRA" id="AhE-Cc-rux"/>
+                                    <outlet property="delegate" destination="oiO-Yc-VRA" id="cqX-Bp-hwz"/>
+                                </connections>
+                            </collectionView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="mMd-76-Ixe"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="NgQ-Pd-0zY">
-                            <size key="itemSize" width="128" height="128"/>
-                            <size key="headerReferenceSize" width="0.0" height="0.0"/>
-                            <size key="footerReferenceSize" width="0.0" height="0.0"/>
-                            <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
-                        </collectionViewFlowLayout>
-                        <cells>
-                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="PhotoCell" id="CgV-cA-VWs">
-                                <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="n3y-uM-T78">
-                                    <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                </collectionViewCellContentView>
-                            </collectionViewCell>
-                        </cells>
-                        <connections>
-                            <outlet property="dataSource" destination="7mp-On-vWX" id="P62-ox-Pjt"/>
-                            <outlet property="delegate" destination="7mp-On-vWX" id="lZE-Bq-JqY"/>
-                        </connections>
-                    </collectionView>
-                </collectionViewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="H3b-gD-up2" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                        <constraints>
+                            <constraint firstItem="Sv3-Ho-fly" firstAttribute="leading" secondItem="mMd-76-Ixe" secondAttribute="leading" constant="16" id="4wD-nM-KaY"/>
+                            <constraint firstItem="Sv3-Ho-fly" firstAttribute="bottom" secondItem="mMd-76-Ixe" secondAttribute="bottom" id="OHx-f3-DRO"/>
+                            <constraint firstItem="Sv3-Ho-fly" firstAttribute="top" secondItem="mMd-76-Ixe" secondAttribute="top" id="VEm-7X-95O"/>
+                            <constraint firstItem="mMd-76-Ixe" firstAttribute="trailing" secondItem="Sv3-Ho-fly" secondAttribute="trailing" constant="16" id="ggJ-Hr-QFf"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="photoAlbum" destination="Sv3-Ho-fly" id="8tX-E3-X1W"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="4EH-Sh-rl6" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="511" y="38"/>
+            <point key="canvasLocation" x="796.92307692307691" y="41.943127962085306"/>
         </scene>
     </scenes>
     <resources>
