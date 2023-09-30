@@ -11,6 +11,7 @@ import CoreData
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
+    // Creates a single reference to the dataController, accessible from anywhere.
     static let dataController = DataController(ModelName: "Virtual_Tourist")
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {

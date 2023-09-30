@@ -20,6 +20,8 @@
 		F1406F0B2AC1AEB3009C0526 /* PhotoAlbumViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1406F0A2AC1AEB3009C0526 /* PhotoAlbumViewController.swift */; };
 		F1406F0D2AC22B81009C0526 /* PhotoClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1406F0C2AC22B81009C0526 /* PhotoClient.swift */; };
 		F19D22EA2ABA053100C1BF86 /* PinExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F19D22E92ABA053100C1BF86 /* PinExtension.swift */; };
+		F1D317632AC7736900D88F11 /* APhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1D317622AC7736900D88F11 /* APhoto.swift */; };
+		F1D317652AC869C600D88F11 /* PhotoAlbumCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1D317642AC869C600D88F11 /* PhotoAlbumCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +40,8 @@
 		F1406F0A2AC1AEB3009C0526 /* PhotoAlbumViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAlbumViewController.swift; sourceTree = "<group>"; };
 		F1406F0C2AC22B81009C0526 /* PhotoClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoClient.swift; sourceTree = "<group>"; };
 		F19D22E92ABA053100C1BF86 /* PinExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinExtension.swift; sourceTree = "<group>"; };
+		F1D317622AC7736900D88F11 /* APhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APhoto.swift; sourceTree = "<group>"; };
+		F1D317642AC869C600D88F11 /* PhotoAlbumCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAlbumCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +80,10 @@
 				F1406F0C2AC22B81009C0526 /* PhotoClient.swift */,
 				F11B22FC2AA22310001AF3AF /* MapViewController.swift */,
 				F1406F0A2AC1AEB3009C0526 /* PhotoAlbumViewController.swift */,
+				F1D317642AC869C600D88F11 /* PhotoAlbumCell.swift */,
 				F10038B72AB4887B00E253C5 /* GeocoderExtension.swift */,
 				F19D22E92ABA053100C1BF86 /* PinExtension.swift */,
+				F1D317622AC7736900D88F11 /* APhoto.swift */,
 				F10038AD2AAB503700E253C5 /* Settings.swift */,
 				F11B22FE2AA22310001AF3AF /* Main.storyboard */,
 				F11B23042AA22314001AF3AF /* Assets.xcassets */,
@@ -166,8 +172,10 @@
 				F11B22FD2AA22310001AF3AF /* MapViewController.swift in Sources */,
 				F1406F0D2AC22B81009C0526 /* PhotoClient.swift in Sources */,
 				F11B22F92AA22310001AF3AF /* AppDelegate.swift in Sources */,
+				F1D317632AC7736900D88F11 /* APhoto.swift in Sources */,
 				F11B22FB2AA22310001AF3AF /* SceneDelegate.swift in Sources */,
 				F1406F0B2AC1AEB3009C0526 /* PhotoAlbumViewController.swift in Sources */,
+				F1D317652AC869C600D88F11 /* PhotoAlbumCell.swift in Sources */,
 				F10038B82AB4887B00E253C5 /* GeocoderExtension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

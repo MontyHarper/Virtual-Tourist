@@ -383,24 +383,67 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
                 
         print("Goto Photo Page For Pin: \(pin.title ?? "Untitled Pin")")
         
-        // change this to > when you have code for downloading ready to test
-        if pin.numberOfPhotos >= 0 {
-            
-            let storyboard = UIStoryboard(name: "Main", bundle: nil)
-            
-            guard let photoAlbumView = storyboard.instantiateViewController(withIdentifier: "PhotoAlbum") as? PhotoAlbumViewController else {
+        // Set up a new photoAlbumView
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        guard let photoAlbumView = storyboard.instantiateViewController(withIdentifier: "PhotoAlbum") as? PhotoAlbumViewController else {
                 return
             }
-            // Customize the collectionViewController if needed
-            // For example, you can pass data to the collectionViewController
-            photoAlbumView.pin = pin
+        
+        if pin.numberOfPhotos == 0 {
             
-            navigationController?.pushViewController(photoAlbumView, animated: true)
+            // Download photos for this pin
+            PhotoClient.photoSearch(pin: pin, completion: processPhotos(success:error:photos:pin:))
             
-        } else {
-            
-            // code here to download photos
         }
+        
+        // Add pin to the view, and present!
+        photoAlbumView.pin = pin
+        navigationController?.pushViewController(photoAlbumView, animated: true)
+        
+        }
+      
+    func processPhotos(success:Bool,error:Error?,photos:[APhoto]?,pin:Pin) {
+        
+        guard success else {
+            print("unsuccessful at fetching photo list")
+            debugPrint(error as Any)
+            return
+        }
+        
+        guard let fetchedPhotos = photos else {
+            print ("no photos fetched from the network")
+            return
+        }
+        
+        print("successfully fetched photo list")
+        print("processing \(fetchedPhotos.count) photos!!")
+        
+        
+        for photo in fetchedPhotos {
+            
+            let newPhoto = Photo(context:AppDelegate.dataController.viewContext)
+            newPhoto.photoAlbum = pin
+            newPhoto.title = photo.title
+            
+            // Calculate distance of photo from pin if photo has a location; otherwise leave distance as default value, which is 1000 just to put the photo far away.
+            if let lat = Double(photo.latitude), let lon = Double(photo.longitude) {
+                let locationPin = CLLocation(latitude:pin.latitude, longitude:pin.longitude)
+                let locationPhoto = CLLocation(latitude: lat, longitude: lon)
+                newPhoto.distance = locationPhoto.distance(from: locationPin)
+            }
+            
+            // Calculate the url needed to fetch the actual image that goes with this photo.
+            let urlString = PhotoClient.Endpoints.returnPhoto.urlString + "\(photo.server)/\(photo.id)_\(photo.secret)_b.jpg"
+            newPhoto.url = urlString
+            
+            do {
+                try AppDelegate.dataController.viewContext.save()
+            } catch {
+                print("problem saving new photos")
+            }
+        }
+        
         
     }
 }

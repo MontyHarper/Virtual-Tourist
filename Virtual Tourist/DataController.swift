@@ -39,30 +39,9 @@ class DataController {
                 fatalError(error!.localizedDescription)
             }
             
- //           self.autoSaveViewContext()
             self.configureContexts()
             completion?()
             
         }
     }
 }
-
-// Not sure that I need autosave for this app
-
-//extension DataController {
-//
-//    func autoSaveViewContext(interval:TimeInterval = 30) {
-//        print("autosave")
-//        guard interval > 0 else {
-//            print("Cannot set negative autosave interval.")
-//            return
-//        }
-//        if viewContext.hasChanges {
-//            try? viewContext.save()
-//        }
-//        DispatchQueue.main.asyncAfter(deadline: .now() + interval) {
-//            self.autoSaveViewContext(interval: interval)
-//        }
-//
-//    }
-//}
