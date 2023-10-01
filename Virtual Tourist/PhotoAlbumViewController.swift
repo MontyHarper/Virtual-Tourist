@@ -11,28 +11,33 @@ import UIKit
 
 class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, NSFetchedResultsControllerDelegate {
  
-
+    // MARK: - Properties
+    
     @IBOutlet weak var photoAlbum: UICollectionView!
     
-    var pin = Pin(context:AppDelegate.dataController.viewContext)
+    let dataController = DataController.shared
+    var pin: Pin!
     var fetchedPhotos: NSFetchedResultsController<Photo>!
     let defaultImage = UIImage(named:"shrug")
+    
+    
+    // MARK: - Lifecycle Methods
     
     override func viewDidLoad() {
         super.viewDidLoad()
       
         self.title = "Photos From \(pin.title ?? "Somewhere")"
         
-        // feeling my way here. how do I specify photos attatched to this pin?
+        // Fetch photos attatched to the pin
         let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "photoAlbum == %@", pin)
         fetchRequest.predicate = predicate
         
-        // Maybe I'll sort by distance from the pin, if I want to make that a calculated property
-        let sortDescriptor = NSSortDescriptor(key: "distance", ascending: false)
+        // Sorting by distance from pin
+        let sortDescriptor = NSSortDescriptor(key: "distance", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
-        self.fetchedPhotos = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: AppDelegate.dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin.id)")
+        self.fetchedPhotos = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin.id)")
         do {
             try self.fetchedPhotos.performFetch()
         } catch {
@@ -41,13 +46,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         
         photoAlbum.delegate = self
         fetchedPhotos.delegate = self
-        
     }
     
     deinit {
         photoAlbum.delegate = nil
     }
     
+    
+    // MARK: - Collection View Delegate Methods
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if let count = fetchedPhotos.fetchedObjects?.count {
@@ -67,11 +73,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             cell.imageView.image = image
         } else {
             cell.imageView.image = defaultImage
+            
+            // If there's no available image in CoreData, fetch one now.
             if let urlString = fetchedPhotos.object(at: indexPath).url {
                 if let url = URL(string:urlString) {
                     PhotoClient.returnImage(url: url) {(success: Bool, error: Error?, image: Data?) in
                         if success {
                             self.fetchedPhotos.object(at: indexPath).image = image
+                            self.dataController.saveContexts()
                         } else {
                             print("image has failed to load: \(String(describing: error))")
                         }
@@ -83,6 +92,10 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         return cell
     }
     
+    
+    // MARK: - Fetched Results Controller Delegate Methods
+    
+    // Updates the collectionView whenever a change in the data is detected by the fetched results controller.
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         
         switch type {
