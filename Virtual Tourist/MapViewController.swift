@@ -9,17 +9,11 @@ import CoreData
 import UIKit
 import MapKit
 
-class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate {
+class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate, NSFetchedResultsControllerDelegate {
 
     // MARK: - Properties
     
-    // One datacontroller to rule them all.
-    let dataController = DataController.shared
-    
-    // All the persisted map pins get loaded into here.
-    var pins:[Pin] = []
-        
-    // Used to reverse geocode locations of map pins.
+    var fetchedPins: NSFetchedResultsController<Pin>!
     let geocoder = CLGeocoder()
     
     // Used to give haptic feedback when a pin is dropped. Documentation says to create and destroy the generator as needed, so initializing as nil.
@@ -36,7 +30,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         super.viewDidLoad()
         
         // Retreive the map view last set by the user, if there is one.
-        
         var mapRect = MKMapRect()
         if let dict = UserDefaults.standard.dictionary(forKey: Settings.currentMap.rawValue) as? [String:Double] {
             mapRect = MapRectConverter.mapRect(from: dict)
@@ -45,14 +38,29 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
             mapRect = MKMapRect(origin: MKMapRect.world.origin, size: MKMapRect.world.size)
         }
         
+        // Fetch pins from core data into fetched reuslts controller
+        let pinFetch:NSFetchRequest<Pin> = Pin.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
+        pinFetch.sortDescriptors = [sortDescriptor]
+        self.fetchedPins = NSFetchedResultsController(fetchRequest: pinFetch, managedObjectContext: DataController.shared.viewContext, sectionNameKeyPath: nil, cacheName: "pincache")
+        do {
+            try self.fetchedPins.performFetch()
+        } catch {
+            assertionFailure("Unable to fetch pins from core data.")
+        }
+        
         // Set up mapView with persisted borders and pins
         mapView.setVisibleMapRect(mapRect, animated: true)
-        loadMapData()
-        mapView.addAnnotations(pins)
+        if let pins = fetchedPins.fetchedObjects {
+            mapView.addAnnotations(pins)
+        } else {
+            print("No map pins exist.")
+        }
         
         // Set up delegation
         mapView.delegate = self
         longPress.delegate = self
+        fetchedPins.delegate = self
     }
     
     
@@ -63,26 +71,17 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     }
     
     
-    
-    // MARK: - Adding Annotations to MapView
-    
-    // Fetches all pins from persisted data to hold in pins array.
-    func loadMapData() {
-        let pinsFetch = NSFetchRequest<Pin>(entityName: "Pin")
-        do {
-            self.pins = try dataController.viewContext.fetch(pinsFetch)
-        } catch {
-            fatalError("Failed to fetch pins")
-        }
-    }
-    
-    
     // MARK: - @IBActions
     
     // This function shows an alert allowing the user to delete all pins currently visible in the mapView. The user triggers it with a trashcan button in the toolbar. Any photos attached to the pins are also deleted.
     
     @IBAction func deletePinsInView(_ sender: Any) {
                 
+        guard let pins = fetchedPins.fetchedObjects else {
+            // No pins to delete.
+            return
+        }
+        
         let pinsToDelete = pins.filter {mapView.visibleMapRect.contains(MKMapPoint($0.coordinate))}
             
         let alert = UIAlertController(title: "Delete Pins", message: "You're about to delete all \(pinsToDelete.count) pins located on the visible map along with any photos associated with those pins. This cannot be undone.", preferredStyle: .alert)
@@ -90,16 +89,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
                 print("Deleting pins:")
                 mapView.removeAnnotations(pinsToDelete)
                 for pin in pinsToDelete {
-                    print(pin)
-                    self.dataController.viewContext.delete(pin)
-                    self.pins.removeAll(where: {$0.id == pin.id})
+                    DataController.shared.viewContext.delete(pin)
                 }
-                do {
-                    try self.dataController.viewContext.save()
-                } catch {
-                    //handle the error
-                    print("Error saving changes after deleting a pin")
-                }
+                DataController.shared.saveContexts()
             }))
             alert.addAction(UIAlertAction(title: "Nevermind", style: UIAlertAction.Style.cancel, handler: {_ in
                 self.dismiss(animated: true)
@@ -172,10 +164,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
             alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: { [self] _ in
                 
                 // Delete the pin, from the pins array, from the map, from CoreData
-                self.pins.removeAll(where: {$0.id == pin.id})
                 mapView.removeAnnotation(pin)
-                self.dataController.viewContext.delete(pin)
-                dataController.saveContexts()
+                DataController.shared.viewContext.delete(pin)
+                DataController.shared.saveContexts()
             }))
             alert.addAction(UIAlertAction(title: "Nevermind", style: UIAlertAction.Style.cancel, handler: {_ in
                 self.dismiss(animated: true)
@@ -205,7 +196,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         if pin.numberOfPhotos == 0 {
             
             // If this pin has no photos yet, download photos
-            PhotoClient.photoSearch(pin: pin, completion: processPhotos(success:error:photos:pin:))
+            PhotoClient.findPhotos(pin)
             
         }
         
@@ -222,13 +213,13 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
     // This method creates a Pin in the view context using the given location and title, saves the context, and updates the pins array and mapView.
     // Maybe part of this should be moved out of view controller.
     fileprivate func createPin (at location: MKPlacemark, title: String, subtitle: String) {
-        let pin = Pin(context:dataController.viewContext)
+        let pin = Pin(context:DataController.shared.viewContext)
         pin.longitude = location.coordinate.longitude
         pin.latitude = location.coordinate.latitude
         pin.title = title
         pin.subtitle = subtitle
-        dataController.saveContexts()
-        pins.append(pin)
+        DataController.shared.saveContexts()
+        PhotoClient.findPhotos(pin)
         mapView.addAnnotation(pin)
     }
     
@@ -398,51 +389,36 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         
         pinView!.annotation = pin
         pinView!.glyphText = "\(pin.numberOfPhotos)"
-        
+        print("returning pin: \(pin.title ?? "unknown") with \(pin.numberOfPhotos) photos.")
         return pinView
     }
     
+
     
-    // MARK: - New Photos - probably should not be in view controller
-      
-    // Given an array of fetched photos, turns each one into a Photo entity to be persisted in Core Data.
-    func processPhotos(success:Bool,error:Error?,photos:[APhoto]?,pin:Pin) {
+    // MARK: - Fetched Results Controller Delegate Methods
+    
+    // Updates the map whenever a change in the data is detected by the fetched results controller.
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         
-        guard success else {
-            print("unsuccessful at fetching photo list")
-            debugPrint(error as Any)
-            return
-        }
-        
-        guard let fetchedPhotos = photos else {
-            print ("no photos fetched from the network")
-            return
-        }
-        
-        print("successfully fetched photo list")
-        print("processing \(fetchedPhotos.count) photos!!")
-        
-        
-        for photo in fetchedPhotos {
+        print("fetched results controller triggered")
+        switch type {
+        case .insert:
+            print("insert at \(String(describing: indexPath))")
+        case .delete:
+            print("delete at \(String(describing: indexPath))")
             
-            let newPhoto = Photo(context:dataController.viewContext)
-            newPhoto.photoAlbum = pin
-            newPhoto.title = photo.title
-            
-            // Calculate distance of photo from pin if photo has a location; otherwise leave distance as default value, which is 1000 just to put the photo far away.
-            if let lat = Double(photo.latitude), let lon = Double(photo.longitude) {
-                let locationPin = CLLocation(latitude:pin.latitude, longitude:pin.longitude)
-                let locationPhoto = CLLocation(latitude: lat, longitude: lon)
-                newPhoto.distance = locationPhoto.distance(from: locationPin)
+        case .update:
+            guard let indexPath = indexPath else {
+                break
             }
+            let pin = fetchedPins.object(at: indexPath)
+            mapView.removeAnnotation(pin)
+            mapView.addAnnotation(pin)
             
-            // Calculate the url needed to fetch the actual image that goes with this photo.
-            let urlString = PhotoClient.Endpoints.returnPhoto.urlString + "\(photo.server)/\(photo.id)_\(photo.secret)_b.jpg"
-            newPhoto.url = urlString
-            
-            dataController.saveContexts()
-            
-            // Should I go ahead and download photos here?
+        case .move:
+            print("move at \(String(describing: indexPath))")
+        @unknown default:
+            print("other at \(String(describing: indexPath))")
         }
     }
 }

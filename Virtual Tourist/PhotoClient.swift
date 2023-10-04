@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import MapKit
 import SwiftUI
 
 
 class PhotoClient {
-    
+        
     enum Endpoints {
         
         static let base = "https://www.flickr.com/services/rest/"
@@ -41,13 +42,15 @@ class PhotoClient {
     }
     
     // Makes a search request for photos near the passed-in Pin; if successful returns an array of APhoto. APhoto is the data structure the json response is decoded into before the data gets persisted in Core Data as a Photo entity.
-    class func photoSearch(pin: Pin, completion: @escaping (Bool,Error?,[APhoto]?,Pin) -> Void) {
+    class func photoSearch(_ pin: Pin, completion: @escaping (Bool,Error?,[APhoto]?,Pin) -> Void) {
         
+        // set up search parameters
         let lat = pin.coordinate.latitude
         let lon = pin.coordinate.longitude
         // geoArea indicates how far out from the pin to search. For now it's set to a static value. I plan to insert an enum that can be iterated over to search in wider and wider circles until at least 20 photos are found.
-        let geoArea = "radius=0.4"
-        let page = Int(pin.currentPage + 1)
+        let geoArea = Radius.distances[Int(pin.radius)]
+        let page = Int(pin.currentPage)
+        
         // Set up request, session, task
         let url = searchURL(lat: lat, lon: lon, geoArea: geoArea, page: page)
         let request = URLRequest(url: url)
@@ -79,18 +82,17 @@ class PhotoClient {
                     let photos = response.photos.photo
                     
                     // Success!
-                    // Update page number and return photos.
-                    pin.currentPage = Int16(page)
-                    DispatchQueue.main.async {
-                        completion(true, nil, photos, pin)
-                    }
+                    // Update pin and return photos.
+                    pin.numberOfPages = Int16(response.photos.pages)
+                    DispatchQueue.main.async {completion(true, nil, photos, pin)}
+                    
                 } catch {
                     print("The data doesn't fit our response pattern")
-                    completion(false, error, nil, pin)
+                    DispatchQueue.main.async {completion(false, error, nil, pin)}
                 }
             } else {
                 print("Request failed")
-                completion(false, error, nil, pin)
+                DispatchQueue.main.async {completion(false, error, nil, pin)}
             }
         }
         task.resume()
@@ -105,15 +107,108 @@ class PhotoClient {
         let task = session.dataTask(with: request) { data, response, error in
             
             if let data = data {
-                
-                let image = data
-                completion(true,nil,image)
+                DispatchQueue.main.async {completion(true,nil,data)}
                 
             } else {
-                completion(false,error,nil)
+                DispatchQueue.main.async {completion(false,error,nil)}
                 
             }
         }
         task.resume()
+    }
+    
+    
+    class func addPhotosToPin(photos:[APhoto],pin:Pin) {
+        
+        for photo in photos {
+            
+            let newPhoto = Photo(context:DataController.shared.viewContext)
+            newPhoto.photoAlbum = pin
+            newPhoto.title = photo.title
+            
+            // Calculate distance of photo from pin if photo has a location; otherwise leave distance as default value, which is 1000 just to put the photo far away.
+            if let lat = Double(photo.latitude), let lon = Double(photo.longitude) {
+                let locationPin = CLLocation(latitude:pin.latitude, longitude:pin.longitude)
+                let locationPhoto = CLLocation(latitude: lat, longitude: lon)
+                newPhoto.distance = locationPhoto.distance(from: locationPin)
+            }
+            
+            // Calculate the url needed to fetch the actual image that goes with this photo.
+            let urlString = PhotoClient.Endpoints.returnPhoto.urlString + "\(photo.server)/\(photo.id)_\(photo.secret)_b.jpg"
+            newPhoto.url = urlString
+                        
+            if let url = URL(string: urlString) {
+                returnImage(url: url) {success, error, data in
+                    if success {
+                        newPhoto.image = data
+                        pin.numberOfPhotos += 1
+                        DataController.shared.saveContexts()
+                    } else {
+                        print("error loading photo: \(String(describing: error))")
+                    }
+                } // End trailing closure
+            } // End if
+            
+            DataController.shared.saveContexts()
+        }
+    }
+    
+    class func findPhotos(_ pin: Pin) {
+        
+        // if this is an established pin, advance the page and search for photos.
+        if pin.new == false {
+            
+            pin.currentPage += 1
+            if pin.currentPage > pin.numberOfPages {
+                pin.currentPage = 1
+            }
+            
+            PhotoClient.photoSearch(pin) {success,error,photos,pin in
+                
+                if let photos = photos {
+                    PhotoClient.addPhotosToPin(photos: photos, pin: pin)
+                } else {
+                    print("Our search has failed to add any new photos. Error: \(String(describing: error))")
+                    // This will fail silently. The pin will be re-set as new.
+                    pin.new = true
+                    pin.currentPage = 1
+                }
+            }
+            
+        // if this is a new pin, search for photos, then expand the search area and try again if we don't get enough results.
+        } else {
+            
+            print("searching :\(Radius.distances[Int(pin.radius)])")
+            PhotoClient.photoSearch(pin) {success,error,photos,pin in
+                
+                if success {
+                    if let photos = photos {
+                        
+                        // If we didn't find enough photos...
+                        if photos.count < Settings.photosPerPage {
+                            
+                            // Expand the radius and try again; if we're at max radius (won't ever happen) fall through.
+                            if pin.radius + 1 < Radius.distances.count {
+                                pin.radius += 1
+                                self.findPhotos(pin)
+                            }
+                            
+                            // If we did find enough photos...
+                        } else {
+                            
+                            // Add the photos to the pin.
+                            pin.new = false
+                            PhotoClient.addPhotosToPin(photos: photos, pin: pin)
+                            
+                        }
+                    }
+                    // Fall through if photos don't materialize
+                } else {
+                    // If the search was not successful
+                    print("There was an error finding photos for this pin: \(String(describing: error))")
+                }
+            }
+            // End of trailing closure
+        }
     }
 }

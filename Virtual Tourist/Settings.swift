@@ -10,7 +10,11 @@ import MapKit
 
 // These settings are persisted in UserDefaults.standard
 enum Settings: String {
-    case currentMap // Stores the current location and zoom shown on the map
+    case currentMap // Current location and zoom shown on the map
+    
+    static var photosPerPage: Int {
+        return 20
+    }
 }
 
 // Converts between MKMapRect and Dictionary type for storage in UserDefaults
@@ -32,3 +36,30 @@ struct MapRectConverter {
         return MKMapRect(origin: MKMapPoint(CLLocationCoordinate2D(latitude: lat, longitude: long)),size:MKMapSize(width: width, height: height))
     }
 }
+
+// This stores search parameters for distances to search around a pin. Used to search widening areas until at least one page of photos can be attributed to the pin.
+struct Radius {
+    static let distances = [
+        "radius=0.1",
+        "radius=0.2",
+        "radius=0.5",
+        "radius=1.0",
+        "radius=1.5",
+        "accuracy=14",
+        "accuracy=13",
+        "accuracy=12",
+        "accuracy=11",
+        "accuracy=10",
+        "accuracy=9",
+        "accuracy=8",
+        "accuracy=7",
+        "accuracy=6",
+        "accuracy=5",
+        "accuracy=4",
+        "accuracy=3",
+        "accuracy=2",
+        "accuracy=1"
+        ]
+}
+
+

@@ -9,11 +9,13 @@
         <relationship name="photoAlbum" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Pin" inverseName="photos" inverseEntity="Pin"/>
     </entity>
     <entity name="Pin" representedClassName="Pin" syncable="YES" codeGenerationType="class">
-        <attribute name="accuracy" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="currentPage" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="latitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="longitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="new" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="numberOfPages" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
         <attribute name="numberOfPhotos" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="radius" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="subtitle" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Photo" inverseName="photoAlbum" inverseEntity="Photo"/>

@@ -13,12 +13,12 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
  
     // MARK: - Properties
     
-    @IBOutlet weak var photoAlbum: UICollectionView!
-    
     let dataController = DataController.shared
     var pin: Pin!
     var fetchedPhotos: NSFetchedResultsController<Photo>!
     let defaultImage = UIImage(named:"shrug")
+    
+    @IBOutlet weak var photoAlbum: UICollectionView!
     
     
     // MARK: - Lifecycle Methods
@@ -29,15 +29,15 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         self.title = "Photos From \(pin.title ?? "Somewhere")"
         
         // Fetch photos attatched to the pin
-        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+        let photoFetch:NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "photoAlbum == %@", pin)
-        fetchRequest.predicate = predicate
+        photoFetch.predicate = predicate
         
         // Sorting by distance from pin
         let sortDescriptor = NSSortDescriptor(key: "distance", ascending: true)
-        fetchRequest.sortDescriptors = [sortDescriptor]
+        photoFetch.sortDescriptors = [sortDescriptor]
         
-        self.fetchedPhotos = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin.id)")
+        self.fetchedPhotos = NSFetchedResultsController(fetchRequest: photoFetch, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin.id)")
         do {
             try self.fetchedPhotos.performFetch()
         } catch {

@@ -14,6 +14,7 @@ struct Response: Codable {
 
 struct Photos: Codable {
     let photo: [APhoto]
+    let pages: Int
 }
 
 struct APhoto: Codable {
