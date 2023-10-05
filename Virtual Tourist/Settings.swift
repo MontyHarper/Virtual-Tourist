@@ -40,25 +40,19 @@ struct MapRectConverter {
 // This stores search parameters for distances to search around a pin. Used to search widening areas until at least one page of photos can be attributed to the pin.
 struct Radius {
     static let distances = [
+        "radius=0.01",
+        "radius=0.05",
         "radius=0.1",
         "radius=0.2",
         "radius=0.5",
         "radius=1.0",
         "radius=1.5",
-        "accuracy=14",
-        "accuracy=13",
-        "accuracy=12",
-        "accuracy=11",
-        "accuracy=10",
-        "accuracy=9",
-        "accuracy=8",
-        "accuracy=7",
-        "accuracy=6",
-        "accuracy=5",
-        "accuracy=4",
-        "accuracy=3",
-        "accuracy=2",
-        "accuracy=1"
+        "radius=2.0",
+        "radius=3.0",
+        "radius=4.0",
+        "radius=8.0",
+        "radius=16.0",
+        "radius=32.0"
         ]
 }
 

@@ -196,7 +196,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         if pin.numberOfPhotos == 0 {
             
             // If this pin has no photos yet, download photos
-            PhotoClient.findPhotos(pin)
+            PhotoClient.findPhotos(pin, nil)
             
         }
         
@@ -219,7 +219,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         pin.title = title
         pin.subtitle = subtitle
         DataController.shared.saveContexts()
-        PhotoClient.findPhotos(pin)
+        PhotoClient.findPhotos(pin, nil)
         mapView.addAnnotation(pin)
     }
     

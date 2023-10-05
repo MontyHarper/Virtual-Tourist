@@ -47,12 +47,13 @@ class PhotoClient {
         // set up search parameters
         let lat = pin.coordinate.latitude
         let lon = pin.coordinate.longitude
-        // geoArea indicates how far out from the pin to search. For now it's set to a static value. I plan to insert an enum that can be iterated over to search in wider and wider circles until at least 20 photos are found.
+        // geoArea indicates how far out from the pin to search. This returns a search parameter from a list of distances to try.
         let geoArea = Radius.distances[Int(pin.radius)]
         let page = Int(pin.currentPage)
         
         // Set up request, session, task
         let url = searchURL(lat: lat, lon: lon, geoArea: geoArea, page: page)
+        print("searching with this URL: \(url)")
         let request = URLRequest(url: url)
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
@@ -153,7 +154,7 @@ class PhotoClient {
         }
     }
     
-    class func findPhotos(_ pin: Pin) {
+    class func findPhotos(_ pin: Pin, _ closure: (() -> Void)?) {
         
         // if this is an established pin, advance the page and search for photos.
         if pin.new == false {
@@ -187,10 +188,10 @@ class PhotoClient {
                         // If we didn't find enough photos...
                         if photos.count < Settings.photosPerPage {
                             
-                            // Expand the radius and try again; if we're at max radius (won't ever happen) fall through.
+                            // Expand the radius and try again; if we're at max radius fall through.
                             if pin.radius + 1 < Radius.distances.count {
                                 pin.radius += 1
-                                self.findPhotos(pin)
+                                self.findPhotos(pin, nil)
                             }
                             
                             // If we did find enough photos...
@@ -209,6 +210,9 @@ class PhotoClient {
                 }
             }
             // End of trailing closure
+        }
+        if let closure = closure {
+            closure()
         }
     }
 }
