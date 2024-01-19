@@ -42,7 +42,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         let pinFetch:NSFetchRequest<Pin> = Pin.fetchRequest()
         let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
         pinFetch.sortDescriptors = [sortDescriptor]
-        self.fetchedPins = NSFetchedResultsController(fetchRequest: pinFetch, managedObjectContext: DataController.shared.viewContext, sectionNameKeyPath: nil, cacheName: "pincache")
+        fetchedPins = NSFetchedResultsController(fetchRequest: pinFetch, managedObjectContext: DataController.shared.viewContext, sectionNameKeyPath: nil, cacheName: "pincache")
         do {
             try self.fetchedPins.performFetch()
         } catch {
@@ -190,8 +190,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         guard let photoAlbumView = storyboard.instantiateViewController(withIdentifier: "PhotoAlbum") as? PhotoAlbumViewController else {
-                return
-            }
+            return
+        }
         
         if pin.numberOfPhotos == 0 {
             
@@ -204,7 +204,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognize
         photoAlbumView.pin = pin
         navigationController?.pushViewController(photoAlbumView, animated: true)
         
-        }
+    }
     
     
     // MARK: - Creation of New Map Annotation (Pin)

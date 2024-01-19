@@ -78,11 +78,7 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     // MARK: - Collection View Delegate Methods
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if let count = fetchedPhotos.fetchedObjects?.count {
-            return count
-        } else {
-            return 0
-        }
+        fetchedPhotos.fetchedObjects?.count ?? 0
     }
     
     
